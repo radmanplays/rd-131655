@@ -164,6 +164,10 @@ public class GL11 extends RealOpenGLEnums {
 	public static void glTranslatef(float f, float g, float h) {
 		translate(f, g, h);
 	}
+	
+	public static void glTranslated(double f, double g, double h) {
+		translate(f, g, h);
+	}
 
 	public static void glRotatef(float f, float g, float h, float i) {
 		rotate(f, g, h, i);

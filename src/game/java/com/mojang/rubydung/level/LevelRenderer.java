@@ -1,126 +1,120 @@
 package com.mojang.rubydung.level;
 
-import com.mojang.rubydung.HitResult;
-import com.mojang.rubydung.Player;
-import org.lwjgl.opengl.GL11;
+public class LevelRenderer {
 
-public class LevelRenderer implements LevelListener {
-	private static final int CHUNK_SIZE = 16;
-	private Level level;
-	private Chunk[] chunks;
-	private int xChunks;
-	private int yChunks;
-	private int zChunks;
-	Tesselator t = new Tesselator();
+    private static final int CHUNK_SIZE = 8;
 
-	public LevelRenderer(Level level) {
-		this.level = level;
-		level.addListener(this);
-		this.xChunks = level.width / 16;
-		this.yChunks = level.depth / 16;
-		this.zChunks = level.height / 16;
-		this.chunks = new Chunk[this.xChunks * this.yChunks * this.zChunks];
+    private final Chunk[] chunks;
 
-		for(int x = 0; x < this.xChunks; ++x) {
-			for(int y = 0; y < this.yChunks; ++y) {
-				for(int z = 0; z < this.zChunks; ++z) {
-					int x0 = x * 16;
-					int y0 = y * 16;
-					int z0 = z * 16;
-					int x1 = (x + 1) * 16;
-					int y1 = (y + 1) * 16;
-					int z1 = (z + 1) * 16;
-					if(x1 > level.width) {
-						x1 = level.width;
-					}
+    private final int chunkAmountX;
+    private final int chunkAmountY;
+    private final int chunkAmountZ;
 
-					if(y1 > level.depth) {
-						y1 = level.depth;
-					}
+    /**
+     * Create renderer for level
+     *
+     * @param level The rendered level
+     */
+    public LevelRenderer(Level level) {
+        // Calculate amount of chunks of level
+        this.chunkAmountX = level.width / CHUNK_SIZE;
+        this.chunkAmountY = level.depth / CHUNK_SIZE;
+        this.chunkAmountZ = level.height / CHUNK_SIZE;
 
-					if(z1 > level.height) {
-						z1 = level.height;
-					}
+        // Create chunk array
+        this.chunks = new Chunk[this.chunkAmountX * this.chunkAmountY * this.chunkAmountZ];
 
-					this.chunks[(x + y * this.xChunks) * this.zChunks + z] = new Chunk(level, x0, y0, z0, x1, y1, z1);
-				}
-			}
-		}
+        // Fill level with chunks
+        for (int x = 0; x < this.chunkAmountX; x++) {
+            for (int y = 0; y < this.chunkAmountY; y++) {
+                for (int z = 0; z < this.chunkAmountZ; z++) {
+                    // Calculate min bounds for chunk
+                    int minChunkX = x * CHUNK_SIZE;
+                    int minChunkY = y * CHUNK_SIZE;
+                    int minChunkZ = z * CHUNK_SIZE;
 
-	}
+                    // Calculate max bounds for chunk
+                    int maxChunkX = (x + 1) * CHUNK_SIZE;
+                    int maxChunkY = (y + 1) * CHUNK_SIZE;
+                    int maxChunkZ = (z + 1) * CHUNK_SIZE;
 
-	public void render(Player player, int layer) {
-		Chunk.rebuiltThisFrame = 0;
-		Frustum frustum = Frustum.getFrustum();
+                    // Check for chunk bounds out of level
+                    maxChunkX = Math.min(level.width, maxChunkX);
+                    maxChunkY = Math.min(level.depth, maxChunkY);
+                    maxChunkZ = Math.min(level.height, maxChunkZ);
 
-		for(int i = 0; i < this.chunks.length; ++i) {
-			if(frustum.cubeInFrustum(this.chunks[i].aabb)) {
-				this.chunks[i].render(layer);
-			}
-		}
+                    // Create chunk based on bounds
+                    Chunk chunk = new Chunk(level, minChunkX, minChunkY, minChunkZ, maxChunkX, maxChunkY, maxChunkZ);
+                    this.chunks[(x + y * this.chunkAmountX) * this.chunkAmountZ + z] = chunk;
+                }
+            }
+        }
+    }
 
-	}
+    /**
+     * Render all chunks of the level
+     *
+     * @param layer The render layer
+     */
+    public void render(int layer) {
+        // Get current camera frustum
+        Frustum frustum = Frustum.getFrustum();
 
-	public void renderHit(HitResult h) {
-		GL11.glEnable(GL11.GL_BLEND);
-		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
-		GL11.glColor4f(1.0F, 1.0F, 1.0F, (float)Math.sin((double)System.currentTimeMillis() / 100.0D) * 0.2F + 0.4F);
-		this.t.init();
-		Tile.rock.renderFace(this.t, h.x, h.y, h.z, h.f);
-		this.t.flush();
-		GL11.glDisable(GL11.GL_BLEND);
-	}
+        // Reset global chunk rebuild stats
+        Chunk.rebuiltThisFrame = 0;
 
-	public void setDirty(int x0, int y0, int z0, int x1, int y1, int z1) {
-		x0 /= 16;
-		x1 /= 16;
-		y0 /= 16;
-		y1 /= 16;
-		z0 /= 16;
-		z1 /= 16;
-		if(x0 < 0) {
-			x0 = 0;
-		}
+        // For all chunks
+        for (Chunk chunk : this.chunks) {
 
-		if(y0 < 0) {
-			y0 = 0;
-		}
+            // Render if bounding box of chunk is in frustum
+            if (frustum.cubeInFrustum(chunk.boundingBox)) {
 
-		if(z0 < 0) {
-			z0 = 0;
-		}
+                // Render chunk
+                chunk.render(layer);
+            }
+        }
+    }
 
-		if(x1 >= this.xChunks) {
-			x1 = this.xChunks - 1;
-		}
+    /**
+     * Mark all chunks inside of the given area as dirty.
+     *
+     * @param minX Minimum on X axis
+     * @param minY Minimum on Y axis
+     * @param minZ Minimum on Z axis
+     * @param maxX Maximum on X axis
+     * @param maxY Maximum on Y axis
+     * @param maxZ Maximum on Z axis
+     */
+    public void setDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        // To chunk coordinates
+        minX /= CHUNK_SIZE;
+        minY /= CHUNK_SIZE;
+        minZ /= CHUNK_SIZE;
+        maxX /= CHUNK_SIZE;
+        maxY /= CHUNK_SIZE;
+        maxZ /= CHUNK_SIZE;
 
-		if(y1 >= this.yChunks) {
-			y1 = this.yChunks - 1;
-		}
+        // Minimum limit
+        minX = Math.max(minX, 0);
+        minY = Math.max(minY, 0);
+        minZ = Math.max(minZ, 0);
 
-		if(z1 >= this.zChunks) {
-			z1 = this.zChunks - 1;
-		}
+        // Maximum limit
+        maxX = Math.min(maxX, this.chunkAmountX - 1);
+        maxY = Math.min(maxY, this.chunkAmountY - 1);
+        maxZ = Math.min(maxZ, this.chunkAmountZ - 1);
 
-		for(int x = x0; x <= x1; ++x) {
-			for(int y = y0; y <= y1; ++y) {
-				for(int z = z0; z <= z1; ++z) {
-					this.chunks[(x + y * this.xChunks) * this.zChunks + z].setDirty();
-				}
-			}
-		}
+        // Mark all chunks as dirty
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    // Get chunk at this position
+                    Chunk chunk = this.chunks[(x + y * this.chunkAmountX) * this.chunkAmountZ + z];
 
-	}
-
-	public void tileChanged(int x, int y, int z) {
-		this.setDirty(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1);
-	}
-
-	public void lightColumnChanged(int x, int z, int y0, int y1) {
-		this.setDirty(x - 1, y0 - 1, z - 1, x + 1, y1 + 1, z + 1);
-	}
-
-	public void allChanged() {
-		this.setDirty(0, 0, 0, this.level.width, this.level.depth, this.level.height);
-	}
+                    // Set dirty
+                    chunk.setDirty();
+                }
+            }
+        }
+    }
 }

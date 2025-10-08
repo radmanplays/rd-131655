@@ -3,10 +3,10 @@ package com.mojang.rubydung.level;
 import net.lax1dude.eaglercraft.opengl.VertexFormat;
 import net.lax1dude.eaglercraft.opengl.WorldVertexBufferUploader;
 
-public class Tesselator {
+public class Tessellator {
 	
 	private net.lax1dude.eaglercraft.opengl.WorldRenderer worldRenderer;
-	public static final Tesselator instance = new Tesselator(524288);
+	public static final Tessellator instance = new Tessellator(524288);
 	private final VertexFormat format = VertexFormat.MODIFIABLE;
 	
 	private double textureU = 0;
@@ -27,12 +27,12 @@ public class Tesselator {
 	
 	private boolean renderingChunk;
 
-	private Tesselator(int var1) {
+	private Tessellator(int var1) {
 		this.renderingChunk = false;
 		this.worldRenderer = new net.lax1dude.eaglercraft.opengl.WorldRenderer(var1);
 	}
 	
-	public Tesselator() {
+	public Tessellator() {
 		this.renderingChunk = false;
 		this.worldRenderer = new net.lax1dude.eaglercraft.opengl.WorldRenderer(524288);
 	}
@@ -51,7 +51,7 @@ public class Tesselator {
 		this.worldRenderer.begin(var1, format);
 	}
 
-	public void tex(double var1, double var3) {
+	public void texture(double var1, double var3) {
 		this.format.setTex();
 		textureU = var1;
 		textureV = var3;
@@ -80,7 +80,7 @@ public class Tesselator {
 	}
 
 	public void addVertexWithUV(double var1, double var3, double var5, double var7, double var9) {
-		this.tex(var7, var9);
+		this.texture(var7, var9);
 		this.vertex(var1, var3, var5);
 	}
 
