@@ -185,6 +185,12 @@ public class RubyDung implements Runnable {
         // Rotate the camera using the mouse motion input
         this.player.turn(motionX, motionY);
 
+        while(Mouse.next()) {
+			if (Mouse.getEventButtonState()) {
+				Mouse.setGrabbed(true);
+			}
+        }
+
         // Clear color and depth buffer and reset the camera
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
