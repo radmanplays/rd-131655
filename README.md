@@ -1,5 +1,6 @@
 # rd-131655 [![Build and Upload JS + WASM](https://github.com/radmanplays/rd-131655/actions/workflows/build.yml/badge.svg)](https://github.com/radmanplays/rd-131655/actions/workflows/build.yml)
-<img width="800" height="600" alt="Pre-Classic_rd-131655" src="https://github.com/user-attachments/assets/2443d2ed-35ef-407b-972a-6cc61cc1465f" />
+<img width="640" height="360" alt="image" src="https://github.com/user-attachments/assets/84d2c2b7-f409-4637-9de4-797836758e5a" />
+
 
 
 ## requires java 17 to compile!
